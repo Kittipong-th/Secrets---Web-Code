@@ -28,10 +28,9 @@ app.get("/login", function (req, res) {
 app.post("/login", async function (req, res) {
   try {
     const { username, password } = req.body;
-
     const isLogin = await User.findOne({ email: username });
-
-    if (isLogin.password === password) {
+    const md5HashPassword = md5(password);
+    if (isLogin.password === md5HashPassword) {
       res.render("secrets");
     } else {
       res.redirect("/");
