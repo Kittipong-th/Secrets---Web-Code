@@ -3,10 +3,11 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
+const bcrypt = require("bcrypt");
+const saltRounds = 10;
 
 const app = express();
 const port = 3000;
-const md5 = require("md5");
 
 mongoose.connect("mongodb://127.0.0.1:27017/userDB", {
   useNewUrlParser: true,
@@ -29,14 +30,18 @@ app.post("/login", async function (req, res) {
   try {
     const { username, password } = req.body;
     const isLogin = await User.findOne({ email: username });
-    const md5HashPassword = md5(password);
-    if (isLogin.password === md5HashPassword) {
-      res.render("secrets");
-    } else {
-      res.redirect("/");
+
+    if (isLogin) {
+      const match = bcrypt.compare(password, isLogin.password);
+      if (match) {
+        res.render("secrets");
+      } else {
+        res.redirect("/");
+      }
     }
   } catch (error) {}
 });
+
 app.get("/register", function (req, res) {
   res.render("register");
 });
@@ -45,13 +50,17 @@ app.post("/register", async function (req, res) {
   try {
     const { username, password } = req.body;
     //console.log(req.body);
+    const hash = bcrypt.hashSync(password, saltRounds);
     const user = new User({
       email: username,
-      password: md5(password),
+      password: hash,
     });
     const savedUser = await user.save();
-    console.log("Register successfully :" + savedUser);
-    res.redirect("/");
+    if (savedUser) {
+      res.render("secrets");
+    } else {
+      res.redirect("/");
+    }
   } catch (error) {
     console.log(error);
   }
