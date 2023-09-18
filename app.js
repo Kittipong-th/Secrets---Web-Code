@@ -6,6 +6,7 @@ const mongoose = require("mongoose");
 
 const app = express();
 const port = 3000;
+const md5 = require("md5");
 
 mongoose.connect("mongodb://127.0.0.1:27017/userDB", {
   useNewUrlParser: true,
@@ -27,6 +28,7 @@ app.get("/login", function (req, res) {
 app.post("/login", async function (req, res) {
   try {
     const { username, password } = req.body;
+
     const isLogin = await User.findOne({ email: username });
 
     if (isLogin.password === password) {
@@ -42,10 +44,11 @@ app.get("/register", function (req, res) {
 
 app.post("/register", async function (req, res) {
   try {
+    const { username, password } = req.body;
     //console.log(req.body);
     const user = new User({
-      email: req.body.username,
-      password: req.body.password,
+      email: username,
+      password: md5(password),
     });
     const savedUser = await user.save();
     console.log("Register successfully :" + savedUser);
